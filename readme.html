@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2024-09-25 Wed 03:53 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Readme</title>
+<meta name="author" content="Jishnu Rajendran" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" type="text/css" href="images/notebook.css" />
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Readme</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org0f4db61">1. Packages</a></li>
+<li><a href="#org8790d62">2. Sample data</a></li>
+<li><a href="#org79d0999">3. Baseline correction using ARPLS</a></li>
+<li><a href="#orgb3702d7">4. Plots</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org0f4db61" class="outline-2">
+<h2 id="org0f4db61"><span class="section-number-2">1.</span> Packages</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The modules are loaded and we use excellent package <i>SciencePlots</i> for plots
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #3a81c3; font-weight: bold;">import</span> bline_correction <span style="color: #3a81c3; font-weight: bold;">as</span> bc
+<span style="color: #3a81c3; font-weight: bold;">import</span> matplotlib.pyplot <span style="color: #3a81c3; font-weight: bold;">as</span> plt
+<span style="color: #3a81c3; font-weight: bold;">import</span> numpy <span style="color: #3a81c3; font-weight: bold;">as</span> np
+<span style="color: #3a81c3; font-weight: bold;">import</span> scienceplots
+
+plt.style.use([<span style="color: #2d9574;">'science'</span>,<span style="color: #2d9574;">'nature'</span>, <span style="color: #2d9574;">'grid'</span>])
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org8790d62" class="outline-2">
+<h2 id="org8790d62"><span class="section-number-2">2.</span> Sample data</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+A sample data is initialised with a <b>y<sub>true</sub></b> and some noise to simulate a realistic data.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python">np.random.seed(<span style="color: #4e3163;">42</span>)
+<span style="color: #715ab1;">x</span> = np.linspace(<span style="color: #4e3163;">0</span>, <span style="color: #4e3163;">10</span>, <span style="color: #4e3163;">1000</span>)
+<span style="color: #715ab1;">y_true</span> = <span style="color: #4e3163;">2</span> * np.sin(<span style="color: #4e3163;">2</span> * x) + <span style="color: #4e3163;">3</span> * np.cos(<span style="color: #4e3163;">3</span> * x)
+<span style="color: #715ab1;">baseline</span> = <span style="color: #4e3163;">5</span> + <span style="color: #4e3163;">0.5</span> * x + <span style="color: #4e3163;">0.1</span> * x**<span style="color: #4e3163;">2</span>
+<span style="color: #715ab1;">y_noisy</span> = y_true + baseline + np.random.normal(<span style="color: #4e3163;">0</span>, <span style="color: #4e3163;">0.5</span>, x.shape)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org79d0999" class="outline-2">
+<h2 id="org79d0999"><span class="section-number-2">3.</span> Baseline correction using ARPLS</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Asymmetrically Reweighted Penalized Least Squares (<span class="underline">ARPLS</span>) smoothing is an effective method for baseline correction to remove any baseline drifts. This technique iteratively estimates the noise level and adjusts the weights accordingly, using a generalized logistic function to differentiate between signal and baseline.
+By giving more weight to data points below the baseline and less weight to those above, <span class="underline">ARPLS</span> can accurately distinguish between the true signal and noise, thereby removing unwanted baseline drifts and variations.
+In the context of magnetometer measurment data, which often suffers from <i>orientation-dependent errors</i> and <i>surrounding magnetic field gradients</i>, <b>ARPLS</b> can help to isolate and correct for these issues, resulting in cleaner and more reliable data for further analysis.
+This method has been shown to outperform traditional baseline correction techniques, making it a valuable tool for preprocessing magnetometer data.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #715ab1;">baseline_est</span> = bc.adaptive_arpls(y_noisy, lam=1e7)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb3702d7" class="outline-2">
+<h2 id="orgb3702d7"><span class="section-number-2">4.</span> Plots</h2>
+<div class="outline-text-2" id="text-4">
+<div class="org-src-container">
+<pre class="src src-python" id="orgee49f67">plt.figure(figsize=(<span style="color: #4e3163;">7</span>, <span style="color: #4e3163;">5</span>))
+plt.plot(x, y_noisy, label=<span style="color: #2d9574;">'Original Signal'</span>)
+plt.plot(x, baseline_est, label=<span style="color: #2d9574;">'Estimated Baseline'</span>)
+plt.plot(x, y_noisy - baseline_est, label=<span style="color: #2d9574;">'Corrected Signal'</span>)
+plt.legend()
+plt.title(<span style="color: #2d9574;">'ARPLS Baseline Correction'</span>)
+plt.xlabel(<span style="color: #2d9574;">'X'</span>)
+plt.ylabel(<span style="color: #2d9574;">"Signal"</span>)
+</pre>
+</div>
+
+<div id="orgb3d2eec" class="figure">
+<p><img src="images/boxplot.svg" alt="boxplot.svg" class="org-svg" />
+</p>
+<p><span class="figure-number">Figure 1: </span>ARPLS Baseline correction</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

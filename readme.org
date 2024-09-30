@@ -1,0 +1,69 @@
+#+title: Readme
+#+author: Jishnu Rajendran
+#+email: jishnu.rajendran@dfa.unict.it
+#+OPTIONS:   html-style:nil
+#+OPTIONS:   html-scripts:nil
+#+OPTIONS:   html-postamble:nil
+#+OPTIONS:   broken-links:mark
+#+PROPERTY: header-args:python :python /home/jishnu/.cache/pypoetry/virtualenvs/bline-correction-lp9YeC05-py3.12/bin/python
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="images/notebook.css" />
+
+* Packages
+
+The modules are loaded and we use excellent package /SciencePlots/ for plots
+#+begin_src python :session :results verbatim
+import bline_correction as bc
+import matplotlib.pyplot as plt
+import numpy as np
+import scienceplots
+
+plt.style.use(['science','nature', 'grid'])
+#+end_src
+
+#+RESULTS:
+: None
+
+* Sample data
+A sample data is initialised with a *y_true* and some noise to simulate a realistic data.
+
+#+Begin_src python :session
+np.random.seed(42)
+x = np.linspace(0, 10, 1000)
+y_true = 2 * np.sin(2 * x) + 3 * np.cos(3 * x)
+baseline = 5 + 0.5 * x + 0.1 * x**2
+y_noisy = y_true + baseline + np.random.normal(0, 0.5, x.shape)
+#+end_src
+
+#+RESULTS:
+: None
+
+* Baseline correction using ARPLS
+
+Asymmetrically Reweighted Penalized Least Squares (_ARPLS_) smoothing is an effective method for baseline correction to remove any baseline drifts. This technique iteratively estimates the noise level and adjusts the weights accordingly, using a generalized logistic function to differentiate between signal and baseline.
+By giving more weight to data points below the baseline and less weight to those above, _ARPLS_ can accurately distinguish between the true signal and noise, thereby removing unwanted baseline drifts and variations.
+In the context of magnetometer measurment data, which often suffers from /orientation-dependent errors/ and /surrounding magnetic field gradients/, *ARPLS* can help to isolate and correct for these issues, resulting in cleaner and more reliable data for further analysis.
+This method has been shown to outperform traditional baseline correction techniques, making it a valuable tool for preprocessing magnetometer data.
+
+#+begin_src python :session
+baseline_est = bc.adaptive_arpls(y_noisy, lam=1e7)
+#+end_src
+
+#+RESULTS:
+: None
+
+* Plots
+#+name: fig:ARPLS_Baseline_Correction
+#+begin_src python :results graphics file output :file images/boxplot.svg :session :exports both
+plt.figure(figsize=(7, 5))
+plt.plot(x, y_noisy, label='Original Signal')
+plt.plot(x, baseline_est, label='Estimated Baseline')
+plt.plot(x, y_noisy - baseline_est, label='Corrected Signal')
+plt.legend()
+plt.title('ARPLS Baseline Correction')
+plt.xlabel('X')
+plt.ylabel("Signal")
+#+end_src
+#+label: fig:ARPLS_Baseline_Correction
+#+caption: ARPLS Baseline correction
+#+RESULTS: fig:ARPLS_Baseline_Correction
+[[file:images/boxplot.svg]]
