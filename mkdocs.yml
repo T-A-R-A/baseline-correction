@@ -1,0 +1,7 @@
+site_name: Baseline Correction ARPLS
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
